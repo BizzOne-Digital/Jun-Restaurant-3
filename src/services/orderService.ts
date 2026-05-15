@@ -33,7 +33,7 @@ type LeanOrder = Omit<IOrderDocument, keyof Document> & {
  * - Increments orderedCount on each MenuItem
  */
 export async function placeOrder(
-  userId: string,
+  userId: string | null,
   input: PlaceOrderInput,
   paymentOptions?: {
     paymentStatus?: string
@@ -138,7 +138,7 @@ function serializeOrder(order: LeanOrder): IOrder {
   return {
     _id: order._id.toString(),
     orderNumber: order.orderNumber,
-    userId: order.userId.toString(),
+    userId: order.userId?.toString() ?? 'guest',
     items: order.items.map((item) => ({
       menuItemId: item.menuItemId.toString(),
       nameSnapshot: item.nameSnapshot,

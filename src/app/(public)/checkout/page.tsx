@@ -6,12 +6,10 @@ import { useCartStore } from '@/store/cartStore'
 import { useAuthStore } from '@/store/authStore'
 import { CartItemRow } from '@/components/cart/CartItem'
 import { OrderTypeSelector } from '@/components/checkout/OrderTypeSelector'
-import { DeliveryForm } from '@/components/checkout/DeliveryForm'
 import { TipSelector } from '@/components/checkout/TipSelector'
 import { OrderTotals } from '@/components/checkout/OrderTotals'
 import { Button } from '@/components/ui/Button'
 import type { TipPercentage } from '@/lib/constants'
-import type { DeliveryAddressInput } from '@/validation/orderSchemas'
 
 // ============================================================
 // Checkout page — fill order details, then redirect to Stripe
@@ -27,12 +25,9 @@ export default function CheckoutPage() {
   const { user, isLoading: authLoading } = useAuthStore()
   const { items } = useCartStore()
 
-  const [orderType, setOrderType] = useState<'pickup' | 'delivery'>('pickup')
   const [tip, setTip] = useState<TipPercentage>(15)
-  const [deliveryAddress, setDeliveryAddress] = useState<Partial<DeliveryAddressInput>>({})
-  const [deliveryErrors, setDeliveryErrors] = useState<Partial<Record<keyof DeliveryAddressInput, string>>>({})
 
-  // Pickup contact fields (name/email/phone for pickup orders)
+  // Pickup contact fields
   const [pickupFullName, setPickupFullName] = useState('')
   const [pickupEmail, setPickupEmail] = useState('')
   const [pickupPhone, setPickupPhone] = useState('')
@@ -71,7 +66,6 @@ export default function CheckoutPage() {
   const total = subtotal + tipAmount
 
   const validatePickupContact = (): boolean => {
-    if (orderType !== 'pickup') return true
     const errors: PickupContactErrors = {}
     if (!pickupFullName.trim()) errors.fullName = 'Full name is required'
     if (!pickupEmail.trim()) {
@@ -84,35 +78,10 @@ export default function CheckoutPage() {
     return Object.keys(errors).length === 0
   }
 
-  const validateDelivery = (): boolean => {
-    if (orderType !== 'delivery') return true
-    const errors: Partial<Record<keyof DeliveryAddressInput, string>> = {}
-    if (!deliveryAddress.fullName?.trim()) errors.fullName = 'Full name is required'
-    if (!deliveryAddress.phone?.trim()) errors.phone = 'Phone number is required'
-    if (!deliveryAddress.streetAddress?.trim()) errors.streetAddress = 'Street address is required'
-    if (!deliveryAddress.suburb?.trim()) errors.suburb = 'Suburb is required'
-    if (!deliveryAddress.state?.trim()) errors.state = 'State is required'
-    if (!deliveryAddress.postcode?.trim()) errors.postcode = 'Postcode is required'
-    setDeliveryErrors(errors)
-    return Object.keys(errors).length === 0
-  }
-
   const handlePaySecurely = async () => {
     if (!validatePickupContact()) return
-    if (!validateDelivery()) return
     setServerError('')
     setIsRedirecting(true)
-
-    // For delivery, customer name/email/phone come from deliveryAddress + user session
-    const customerName = orderType === 'pickup'
-      ? pickupFullName.trim()
-      : deliveryAddress.fullName?.trim() ?? ''
-    const customerEmail = orderType === 'pickup'
-      ? pickupEmail.trim()
-      : user?.email ?? ''
-    const customerPhone = orderType === 'pickup'
-      ? pickupPhone.trim()
-      : deliveryAddress.phone?.trim() ?? ''
 
     try {
       const res = await fetch('/api/payments/create-intent', {
@@ -126,12 +95,12 @@ export default function CheckoutPage() {
             imageUrl: i.imageUrl,
           })),
           orderMeta: {
-            orderType,
+            orderType: 'pickup',
             tipPercentage: tip,
-            deliveryAddress: orderType === 'delivery' ? deliveryAddress : null,
-            customerName,
-            customerEmail,
-            customerPhone,
+            deliveryAddress: null,
+            customerName: pickupFullName.trim(),
+            customerEmail: pickupEmail.trim(),
+            customerPhone: pickupPhone.trim(),
           },
         }),
       })
@@ -162,7 +131,7 @@ export default function CheckoutPage() {
           <div className="md:col-span-2 space-y-6">
             {/* Order type */}
             <div className="bg-white rounded-card border border-restaurant-border p-6">
-              <OrderTypeSelector value={orderType} onChange={setOrderType} />
+              <OrderTypeSelector />
             </div>
 
             {/* Pickup contact info */}
@@ -255,19 +224,7 @@ export default function CheckoutPage() {
               </div>
             )}
 
-            {/* Delivery form */}
-            {orderType === 'delivery' && (
-              <div className="bg-white rounded-card border border-restaurant-border p-6">
-                <h2 className="font-semibold text-restaurant-text mb-4">Delivery Address</h2>
-                <DeliveryForm
-                  values={deliveryAddress}
-                  onChange={(field, val) =>
-                    setDeliveryAddress((prev) => ({ ...prev, [field]: val }))
-                  }
-                  errors={deliveryErrors}
-                />
-              </div>
-            )}
+
 
             {/* Tip selector */}
             <div className="bg-white rounded-card border border-restaurant-border p-6">

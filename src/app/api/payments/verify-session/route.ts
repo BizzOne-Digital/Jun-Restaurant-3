@@ -15,10 +15,8 @@ import { sendMerchantOrderEmail, sendCustomerConfirmationEmail } from '@/lib/mai
 // ============================================================
 
 export async function POST(request: NextRequest) {
+  // Auth is optional — guest orders are allowed
   const user = await getSessionUser()
-  if (!user) {
-    return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 })
-  }
 
   try {
     const { sessionId } = await request.json()
@@ -37,10 +35,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verify this session belongs to the logged-in user
-    if (session.metadata?.userId !== user.id) {
-      return NextResponse.json({ success: false, error: 'Unauthorised' }, { status: 403 })
-    }
 
     await connectDB()
 
@@ -58,7 +52,7 @@ export async function POST(request: NextRequest) {
           order: {
             ...existing,
             _id: existing._id.toString(),
-            userId: existing.userId.toString(),
+            userId: existing.userId?.toString() ?? 'guest',
             items: existing.items.map((item) => ({
               ...item,
               menuItemId: item.menuItemId.toString(),
@@ -102,8 +96,13 @@ export async function POST(request: NextRequest) {
       })
     )
 
+    const resolvedUserId =
+      session.metadata?.userId && session.metadata.userId !== 'guest'
+        ? session.metadata.userId
+        : (user?.id ?? null)
+
     const order = await placeOrder(
-      user.id,
+      resolvedUserId,
       {
         items: resolvedItems,
         orderType: orderMeta.orderType,

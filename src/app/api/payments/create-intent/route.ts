@@ -32,11 +32,9 @@ interface OrderMeta {
 }
 
 export async function POST(request: NextRequest) {
+  // Optional auth — guests are allowed to place orders
   const user = await getSessionUser()
-  if (!user) {
-    return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 })
-  }
-  if (user.role === 'admin') {
+  if (user?.role === 'admin') {
     return NextResponse.json({ success: false, error: 'Admin accounts cannot place orders' }, { status: 403 })
   }
 
@@ -123,12 +121,12 @@ export async function POST(request: NextRequest) {
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       line_items: lineItems,
-      customer_email: user.email,
+      customer_email: orderMeta.customerEmail || user?.email || undefined,
       success_url: `${appUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/checkout`,
       metadata: {
-        userId: user.id,
-        userEmail: user.email,
+        userId: user?.id ?? 'guest',
+        userEmail: orderMeta.customerEmail ?? user?.email ?? '',
         orderType: orderMeta.orderType,
         tipPercentage: String(tipPct),
         // Encode order data so we can reconstruct it on success
@@ -144,7 +142,7 @@ export async function POST(request: NextRequest) {
       },
       payment_intent_data: {
         metadata: {
-          userId: user.id,
+          userId: user?.id ?? 'guest',
         },
       },
     })

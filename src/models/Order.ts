@@ -25,7 +25,7 @@ export interface IDeliveryAddress {
 
 export interface IOrderDocument extends Document {
   orderNumber: string
-  userId: Types.ObjectId
+  userId?: Types.ObjectId
   items: IOrderItemEmbed[]
   orderType: 'pickup' | 'delivery'
   deliveryAddress: IDeliveryAddress | null
@@ -85,7 +85,8 @@ const OrderSchema = new Schema<IOrderDocument>(
     userId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      required: false,
+      default: null,
     },
     items: {
       type: [OrderItemSchema],

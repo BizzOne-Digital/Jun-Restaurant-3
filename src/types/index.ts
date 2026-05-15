@@ -70,7 +70,7 @@ export interface IOrderItem {
 export interface IOrder {
   _id: string
   orderNumber: string
-  userId: string
+  userId?: string
   items: IOrderItem[]
   orderType: OrderType
   deliveryAddress: IAddress | null
