@@ -1,0 +1,5 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#FBE9E7"/>
+  <text x="200" y="140" font-family="Arial,sans-serif" font-size="48" text-anchor="middle" fill="#BF360C">🥓</text>
+  <text x="200" y="185" font-family="Arial,sans-serif" font-size="16" text-anchor="middle" fill="#BF360C" opacity="0.7">Pork Dish</text>
+</svg>

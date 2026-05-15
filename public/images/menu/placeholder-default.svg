@@ -1,0 +1,5 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#FFF3E0"/>
+  <text x="200" y="140" font-family="Arial,sans-serif" font-size="48" text-anchor="middle" fill="#E65100">🍽️</text>
+  <text x="200" y="185" font-family="Arial,sans-serif" font-size="16" text-anchor="middle" fill="#E65100" opacity="0.7">Chinese Cuisine</text>
+</svg>
